@@ -8,10 +8,10 @@ import (
 )
 
 type TaskService struct {
-	store *store.TaskStore
+	store store.Store
 }
 
-func NewTaskService(s *store.TaskStore) *TaskService {
+func NewTaskService(s store.Store) *TaskService {
 	return &TaskService{store: s}
 }
 

@@ -5,6 +5,11 @@ import (
 	"sync"
 	"github.com/mike-testut/task-api/internal/models"
 )
+type Store interface {
+	CreateTask(content string) models.Task
+	GetTask(id int)(models.Task, error)
+	ListTasks()[]models.Task
+}
 
 type TaskStore struct {
 	mu     sync.Mutex
