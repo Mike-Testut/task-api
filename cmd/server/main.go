@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/mike-testut/task-api/internal/handlers"
 	"github.com/mike-testut/task-api/internal/router"
@@ -19,12 +20,18 @@ func main() {
 
 	appRouter := router.NewRouter(taskHandlers)
 
+	port, ok := os.LookupEnv("PORT")
+	if !ok{
+		port = "8080"
+	}
+	addr := ":" + port
+
 	server := &http.Server{
-		Addr:    ":8080",
+		Addr:    addr,
 		Handler: appRouter,
 	}
 
-	log.Println("Starting server on localhost:8080...")
+	log.Printf("Starting server on %s...",addr)
 	err := server.ListenAndServe()
 	if err != nil {
 		log.Fatalf("Server failed to start: %v", err)
