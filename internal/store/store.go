@@ -6,9 +6,11 @@ import (
 	"github.com/mike-testut/task-api/internal/models"
 )
 type Store interface {
-	CreateTask(content string) models.Task
+	CreateTask(content string)(models.Task,error)
 	GetTask(id int)(models.Task, error)
-	ListTasks()[]models.Task
+	ListTasks()([]models.Task,error)
+	UpdateTask(id int, content string, completed bool)(models.Task,error)
+	DeleteTask(id int) error
 }
 
 type TaskStore struct {
