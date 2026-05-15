@@ -23,16 +23,23 @@ func (s *TaskService) CreateTask(content string) (models.Task, error) {
 		return models.Task{}, fmt.Errorf("task content is too long (max 100 characters)")
 	}
 
-	task,_ := s.store.CreateTask(content)
+	return s.store.CreateTask(content)
 
-	return task, nil
 }
 
-func (s *TaskService) GetTask(id int)(models.Task, error){
+func (s *TaskService) GetTask(id int) (models.Task, error) {
 	return s.store.GetTask(id)
 }
 
-func (s *TaskService) ListTasks() []models.Task{
-	tasks,_ := s.store.ListTasks()
-	return tasks
+func (s *TaskService) ListTasks() ([]models.Task, error) {
+	return s.store.ListTasks()
+
+}
+
+func (s *TaskService) UpdateTask(id int, content string, completed bool) (models.Task, error) {
+	return s.store.UpdateTask(id, content, completed)
+}
+
+func (s *TaskService) DeleteTask(id int) error {
+	return s.store.DeleteTask(id)
 }

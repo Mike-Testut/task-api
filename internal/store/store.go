@@ -3,13 +3,15 @@ package store
 import (
 	"fmt"
 	"sync"
+
 	"github.com/mike-testut/task-api/internal/models"
 )
+
 type Store interface {
-	CreateTask(content string)(models.Task,error)
-	GetTask(id int)(models.Task, error)
-	ListTasks()([]models.Task,error)
-	UpdateTask(id int, content string, completed bool)(models.Task,error)
+	CreateTask(content string) (models.Task, error)
+	GetTask(id int) (models.Task, error)
+	ListTasks() ([]models.Task, error)
+	UpdateTask(id int, content string, completed bool) (models.Task, error)
 	DeleteTask(id int) error
 }
 
@@ -26,7 +28,7 @@ func NewTaskStore() *TaskStore {
 	}
 }
 
-func (s *TaskStore) CreateTask(content string) models.Task {
+func (s *TaskStore) CreateTask(content string) (models.Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -39,7 +41,7 @@ func (s *TaskStore) CreateTask(content string) models.Task {
 	s.tasks[task.ID] = task
 	s.nextID++
 
-	return task
+	return task, nil
 }
 
 func (s *TaskStore) GetTask(id int) (models.Task, error) {
@@ -54,14 +56,41 @@ func (s *TaskStore) GetTask(id int) (models.Task, error) {
 	return task, nil
 }
 
-func(s *TaskStore) ListTasks()[]models.Task{
+func (s *TaskStore) ListTasks() ([]models.Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	allTasks := make([]models.Task, 0, len(s.tasks))
 
-	for _,task := range s.tasks{
+	for _, task := range s.tasks {
 		allTasks = append(allTasks, task)
 	}
-	return allTasks
+	return allTasks, nil
+}
+
+func (s *TaskStore) UpdateTask(id int, content string, completed bool) (models.Task, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	task, ok := s.tasks[id]
+	if !ok {
+		return models.Task{}, fmt.Errorf("task with id %d not found", id)
+	}
+	task.Content = content
+	task.Completed = completed
+	s.tasks[id] = task
+
+	return task, nil
+}
+
+func (s *TaskStore) DeleteTask(id int) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	_, ok := s.tasks[id]
+	if !ok {
+		return fmt.Errorf("task with id %d not found", id)
+	}
+	delete(s.tasks, id)
+	return nil
 }
