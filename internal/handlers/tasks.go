@@ -63,8 +63,8 @@ func (h *TaskHandlers) ListTasksHandler(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(tasks)
 }
 
-func (h *TaskHandlers) UpdateTaskHandler(w http.ResponseWriter r *http.Request){
-	idStr = r.PathValue("id")
+func (h *TaskHandlers) UpdateTaskHandler(w http.ResponseWriter, r *http.Request){
+	idStr := r.PathValue("id")
 	id,err := strconv.Atoi(idStr)
 	if err!=nil{
 		http.Error(w,"Invalid task ID", http.StatusBadRequest)
@@ -80,7 +80,7 @@ func (h *TaskHandlers) UpdateTaskHandler(w http.ResponseWriter r *http.Request){
 		http.Error(w,err.Error(), http.StatusBadRequest)
 		return
 	}
-	task, err := h.serice.UpdateTask(id, input.Content, input.Completed)
+	task, err := h.service.UpdateTask(id, input.Content, input.Completed)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -91,9 +91,9 @@ func (h *TaskHandlers) UpdateTaskHandler(w http.ResponseWriter r *http.Request){
 	json.NewEncoder(w).Encode(task)
 }
 
-func (h *TaskHandlers) DeleteTaskHandler(w http.ResponseWriter r *http.Request){
-	idStr = r.PathValue("id")
-	id, err = strconv.Atoi(idStr)
+func (h *TaskHandlers) DeleteTaskHandler(w http.ResponseWriter, r *http.Request){
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "Invalid task ID", http.StatusBadRequest)
 		return
