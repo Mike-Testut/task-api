@@ -12,7 +12,7 @@ import (
 	"github.com/mike-testut/task-api/internal/store"
 
 	"github.com/joho/godotenv"
-	"github.com/jackc/pgx/v5"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func connectToDB() *sql.DB {
