@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
-	"errors"
 
-	"github.com/mike-testut/task-api/internal/service"
 	"github.com/mike-testut/task-api/internal/httpjson"
+	"github.com/mike-testut/task-api/internal/service"
 )
 
 type TaskHandlers struct {
@@ -31,9 +31,9 @@ func (h *TaskHandlers) CreateTaskHandler(w http.ResponseWriter, r *http.Request)
 
 	task, err := h.service.CreateTask(input.Content)
 	if err != nil {
-		if errors.Is(err, service.ErrContentRequired) || errors.Is(err, service.ErrContentTooLong){
+		if errors.Is(err, service.ErrContentRequired) || errors.Is(err, service.ErrContentTooLong) {
 			httpjson.ErrorJSON(w, http.StatusBadRequest, err.Error())
-		} else{
+		} else {
 			httpjson.ErrorJSON(w, http.StatusInternalServerError, "Internal server error")
 		}
 		return
@@ -52,7 +52,7 @@ func (h *TaskHandlers) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	task, err := h.service.GetTask((id))
 	if err != nil {
-		if errors.Is(err, service.ErrTaskNotFound){
+		if errors.Is(err, service.ErrTaskNotFound) {
 			httpjson.ErrorJSON(w, http.StatusNotFound, err.Error())
 		} else {
 			httpjson.ErrorJSON(w, http.StatusInternalServerError, "Internal service error")
@@ -64,16 +64,32 @@ func (h *TaskHandlers) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TaskHandlers) ListTasksHandler(w http.ResponseWriter, r *http.Request) {
-	tasks, _ := h.service.ListTasks()
+	query := r.URL.Query()
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(tasks)
+	limitStr := query.Get("limit")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 25
+	}
+
+	offsetStr := query.Get("offset")
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+	tasks, err := h.service.ListTasks(limit, offset)
+	if err != nil{
+		httpjson.ErrorJSON(w, http.StatusInternalServerError, "Interna server error")
+		return
+	}
+
+	httpjson.WriteJSON(w,http.StatusOK, tasks)
 }
 
 func (h *TaskHandlers) UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
-	
+
 	if err != nil {
 		httpjson.ErrorJSON(w, http.StatusBadRequest, "invalid task ID")
 		return
@@ -94,7 +110,7 @@ func (h *TaskHandlers) UpdateTaskHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	httpjson.WriteJSON(w,http.StatusOK, task)
+	httpjson.WriteJSON(w, http.StatusOK, task)
 }
 
 func (h *TaskHandlers) DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {

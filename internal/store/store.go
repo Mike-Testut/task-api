@@ -10,7 +10,7 @@ import (
 type Store interface {
 	CreateTask(content string) (models.Task, error)
 	GetTask(id int) (models.Task, error)
-	ListTasks() ([]models.Task, error)
+	ListTasks(limit, offset int) ([]models.Task, error)
 	UpdateTask(id int, content string, completed bool) (models.Task, error)
 	DeleteTask(id int) error
 }

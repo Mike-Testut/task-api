@@ -47,11 +47,11 @@ func (s *PostgresStore) GetTask(id int) (models.Task, error) {
 	return task, nil
 }
 
-func (s *PostgresStore) ListTasks() ([]models.Task, error) {
+func (s *PostgresStore) ListTasks(limit, offset int) ([]models.Task, error) {
 	var tasks []models.Task
-	query := `SELECT * FROM tasks`
+	query := `SELECT * FROM tasks ORDER BY id ASC LIMIT $1 OFFSET $2`
 
-	err := s.db.Select(&tasks, query)
+	err := s.db.Select(&tasks, query, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("could not list tasks: %v", err)
 	}
