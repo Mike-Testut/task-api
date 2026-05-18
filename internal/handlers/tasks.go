@@ -78,12 +78,12 @@ func (h *TaskHandlers) ListTasksHandler(w http.ResponseWriter, r *http.Request) 
 		offset = 0
 	}
 	tasks, err := h.service.ListTasks(limit, offset)
-	if err != nil{
+	if err != nil {
 		httpjson.ErrorJSON(w, http.StatusInternalServerError, "Interna server error")
 		return
 	}
 
-	httpjson.WriteJSON(w,http.StatusOK, tasks)
+	httpjson.WriteJSON(w, http.StatusOK, tasks)
 }
 
 func (h *TaskHandlers) UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {

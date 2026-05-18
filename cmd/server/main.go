@@ -11,8 +11,8 @@ import (
 	"github.com/mike-testut/task-api/internal/service"
 	"github.com/mike-testut/task-api/internal/store"
 
-	"github.com/joho/godotenv"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/joho/godotenv"
 )
 
 func connectToDB() *sql.DB {
@@ -48,7 +48,11 @@ func main() {
 
 	taskHandlers := handlers.NewTaskHandlers(taskService)
 
-	appRouter := router.NewRouter(taskHandlers)
+	v1Router := router.NewRouter(taskHandlers)
+
+	mainRouter := http.NewServeMux()
+
+	mainRouter.Handle("/v1/", http.StripPrefix("/v1", v1Router))
 
 	port, ok := os.LookupEnv("PORT")
 	if !ok {
@@ -58,7 +62,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:    addr,
-		Handler: appRouter,
+		Handler: mainRouter,
 	}
 
 	log.Printf("Starting server on %s...", addr)
