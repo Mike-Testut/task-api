@@ -56,7 +56,7 @@ func (s *TaskStore) GetTask(id int) (models.Task, error) {
 	return task, nil
 }
 
-func (s *TaskStore) ListTasks() ([]models.Task, error) {
+func (s *TaskStore) ListTasks(limit, offset int) ([]models.Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
