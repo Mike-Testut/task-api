@@ -2,9 +2,16 @@ package service
 
 import (
 	"fmt"
+	"errors"
 
 	"github.com/mike-testut/task-api/internal/models"
 	"github.com/mike-testut/task-api/internal/store"
+)
+
+var (
+	ErrTaskNotFound = errors.New("task not found")
+	ErrContentRequired = errors.New("task content is required")
+	ErrContentTooLong = errors.New("task content is too long(max 100 characters)")
 )
 
 type TaskService struct {
@@ -17,10 +24,10 @@ func NewTaskService(s store.Store) *TaskService {
 
 func (s *TaskService) CreateTask(content string) (models.Task, error) {
 	if content == "" {
-		return models.Task{}, fmt.Errorf("task content cannot be empty")
+		return models.Task{}, ErrContentRequired
 	}
 	if len(content) > 100 {
-		return models.Task{}, fmt.Errorf("task content is too long (max 100 characters)")
+		return models.Task{},ErrContentTooLong
 	}
 
 	return s.store.CreateTask(content)
@@ -28,18 +35,31 @@ func (s *TaskService) CreateTask(content string) (models.Task, error) {
 }
 
 func (s *TaskService) GetTask(id int) (models.Task, error) {
-	return s.store.GetTask(id)
+	task, err := s.store.GetTask(id);if err != nil{
+		return models.Task{}, ErrTaskNotFound
+	}
+	return task, nil
 }
 
 func (s *TaskService) ListTasks() ([]models.Task, error) {
-	return s.store.ListTasks()
+	task, err := s.store.ListTasks(); if err != nil{
+		return []models.Task{}, ErrTaskNotFound
+	}
+	return task, nil
 
 }
 
 func (s *TaskService) UpdateTask(id int, content string, completed bool) (models.Task, error) {
-	return s.store.UpdateTask(id, content, completed)
+	task, err := s.store.UpdateTask(id, content, completed); if err != nil{
+		return models.Task{}, ErrTaskNotFound
+	}
+	return task, nil
 }
 
 func (s *TaskService) DeleteTask(id int) error {
-	return s.store.DeleteTask(id)
+	err := s.store.DeleteTask(id); if err!= nil{
+		return ErrTaskNotFound
+	}
+	return nil
+	
 }

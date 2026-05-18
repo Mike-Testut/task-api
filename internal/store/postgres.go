@@ -23,7 +23,7 @@ var _ Store = (*PostgresStore)(nil)
 func (s *PostgresStore) CreateTask(content string) (models.Task, error) {
 	var task models.Task
 
-	query := `INSERT INTO tasks (content) VALUES ($1) RETURNING*`
+	query := `INSERT INTO tasks (content) VALUES ($1) RETURNING *`
 
 	err := s.db.QueryRowx(query, content).StructScan(&task)
 	if err != nil {
