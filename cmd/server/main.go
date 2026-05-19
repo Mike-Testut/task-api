@@ -13,6 +13,8 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func connectToDB() *sql.DB {
@@ -42,17 +44,32 @@ func main() {
 	db := connectToDB()
 	defer db.Close()
 
+
 	taskStore := store.NewPostgresStore(db)
+	userStore := store.NewPostgresUserStore(db)
 
 	taskService := service.NewTaskService(taskStore)
+	authService := service.NewAuthService(userStore)
 
 	taskHandlers := handlers.NewTaskHandlers(taskService)
+	authHandler := handlers.NewAuthHandlers(authService)
 
-	v1Router := router.NewRouter(taskHandlers)
-
+	
 	mainRouter := http.NewServeMux()
+	
+	v1Router := http.NewServeMux()
+
+	v1Router.HandleFunc("GET /tasks", taskHandlers.ListTasksHandler)
+	v1Router.HandleFunc("POST /tasks", taskHandlers.CreateTaskHandler)
+	v1Router.HandleFunc("GET /tasks/{id}", taskHandlers.GetTaskHandler)
+	v1Router.HandleFunc("PUT /tasks/{id}", taskHandlers.UpdateTaskHandler)
+	v1Router.HandleFunc("DELETE /tasks/{id}", taskHandlers.DeleteTaskHandler)
+
+	v1Router.HandleFunc("POST /register", authHandler.RegisterHandler)
+	v1Router.HandleFunc("POST /login", authHandler.LoginHandler)
 
 	mainRouter.Handle("/v1/", http.StripPrefix("/v1", v1Router))
+	
 
 	port, ok := os.LookupEnv("PORT")
 	if !ok {
@@ -60,10 +77,13 @@ func main() {
 	}
 	addr := ":" + port
 
+	loggingHandler := handlers.LoggingMiddleware(mainRouter)
+
 	server := &http.Server{
 		Addr:    addr,
-		Handler: mainRouter,
+		Handler: loggingHandler,
 	}
+	
 
 	log.Printf("Starting server on %s...", addr)
 	err := server.ListenAndServe()
