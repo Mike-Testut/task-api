@@ -12,6 +12,7 @@ import (
 )
 
 var jwtSecret, ok = os.LookupEnv("JWT_SECRET")
+var mySigningKey = []byte(jwtSecret)
 
 type AuthService struct {
 	userStore store.UserStore
@@ -43,11 +44,11 @@ func (s *AuthService) Register(username, password string) (models.User, error) {
 func (s *AuthService) Login(username, password string) (string, error) {
 	user, err := s.userStore.GetUserByUsername(username)
 	if err != nil {
-		return "", fmt.Errorf("login failed: invalid credentials")
+		return "", fmt.Errorf("login failed: invalid credentials: %v", err)
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
-		return "", fmt.Errorf("login failed: invalid credentials")
+		return "", fmt.Errorf("login failed: invalid credentials: %v", err)
 	}
 
 	expirationTime := time.Now().Add(24 * time.Hour)
@@ -59,7 +60,7 @@ func (s *AuthService) Login(username, password string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtSecret)
+	tokenString, err := token.SignedString(mySigningKey)
 	if err != nil {
 		return "", fmt.Errorf("could not generate token: %v", err)
 	}
@@ -73,7 +74,7 @@ func (s *AuthService) ValidateToken(tokenString string) (*Claims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return jwtSecret, nil
+		return mySigningKey, nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("invalid token: %v", err)

@@ -2,19 +2,19 @@ package handlers
 
 import (
 	"context"
-	"net/http"
-	"time"
 	"log"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/mike-testut/task-api/internal/httpjson"
 	"github.com/mike-testut/task-api/internal/service"
 )
 
-func LoggingMiddleware(next http.Handler) http.Handler{
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
+func LoggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		next.ServeHTTP(w,r)
+		next.ServeHTTP(w, r)
 
 		log.Printf(
 			"%s %s %v",
@@ -34,17 +34,18 @@ func NewAuthMiddleware(as *service.AuthService) *AuthMiddleware {
 }
 
 type contextKey string
+
 const userContextKey = contextKey("user_id")
 
-func(am *AuthMiddleware) Protect(next http.Handler)http.Handler{
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
+func (am *AuthMiddleware) Protect(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
-		if authHeader ++ ""{
+		if authHeader == "" {
 			httpjson.ErrorJSON(w, http.StatusUnauthorized, "authorization header required")
 			return
 		}
 		headerParts := strings.Split(authHeader, " ")
-		if len(headerParts) != 2 || headerParts[0]!="Bearer"{
+		if len(headerParts) != 2 || headerParts[0] != "Bearer" {
 			httpjson.ErrorJSON(w, http.StatusUnauthorized, "Invalid Authorization header format")
 			return
 		}
@@ -52,12 +53,12 @@ func(am *AuthMiddleware) Protect(next http.Handler)http.Handler{
 		tokenString := headerParts[1]
 
 		claims, err := am.authService.ValidateToken(tokenString)
-		if err != nil{
+		if err != nil {
 			httpjson.ErrorJSON(w, http.StatusUnauthorized, err.Error())
 			return
 		}
 		ctx := context.WithValue(r.Context(), userContextKey, claims.UserID)
-		
+
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

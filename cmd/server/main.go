@@ -7,14 +7,12 @@ import (
 	"os"
 
 	"github.com/mike-testut/task-api/internal/handlers"
-	"github.com/mike-testut/task-api/internal/router"
 	"github.com/mike-testut/task-api/internal/service"
 	"github.com/mike-testut/task-api/internal/store"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
-	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
+	
 )
 
 func connectToDB() *sql.DB {
@@ -52,23 +50,23 @@ func main() {
 	authService := service.NewAuthService(userStore)
 
 	taskHandlers := handlers.NewTaskHandlers(taskService)
-	authHandler := handlers.NewAuthHandlers(authService)
+	authHandlers := handlers.NewAuthHandlers(authService)
 
-	
+	authMiddleware := handlers.NewAuthMiddleware(authService)
 	mainRouter := http.NewServeMux()
+	protectedRouter := http.NewServeMux()
 	
-	v1Router := http.NewServeMux()
 
-	v1Router.HandleFunc("GET /tasks", taskHandlers.ListTasksHandler)
-	v1Router.HandleFunc("POST /tasks", taskHandlers.CreateTaskHandler)
-	v1Router.HandleFunc("GET /tasks/{id}", taskHandlers.GetTaskHandler)
-	v1Router.HandleFunc("PUT /tasks/{id}", taskHandlers.UpdateTaskHandler)
-	v1Router.HandleFunc("DELETE /tasks/{id}", taskHandlers.DeleteTaskHandler)
+	protectedRouter.HandleFunc("GET /tasks", taskHandlers.ListTasksHandler)
+	protectedRouter.HandleFunc("POST /tasks", taskHandlers.CreateTaskHandler)
+	protectedRouter.HandleFunc("GET /tasks/{id}", taskHandlers.GetTaskHandler)
+	protectedRouter.HandleFunc("PUT /tasks/{id}", taskHandlers.UpdateTaskHandler)
+	protectedRouter.HandleFunc("DELETE /tasks/{id}", taskHandlers.DeleteTaskHandler)
 
-	v1Router.HandleFunc("POST /register", authHandler.RegisterHandler)
-	v1Router.HandleFunc("POST /login", authHandler.LoginHandler)
+	mainRouter.HandleFunc("POST /v1/register", authHandlers.RegisterHandler)
+	mainRouter.HandleFunc("POST /v1/login", authHandlers.LoginHandler)
 
-	mainRouter.Handle("/v1/", http.StripPrefix("/v1", v1Router))
+	mainRouter.Handle("/v1/", http.StripPrefix("/v1", authMiddleware.Protect(protectedRouter)))
 	
 
 	port, ok := os.LookupEnv("PORT")

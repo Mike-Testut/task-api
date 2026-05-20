@@ -18,7 +18,7 @@ type PostgresUserStore struct {
 	db *sqlx.DB
 }
 
-func NewPostgresUserStore(db *sql.DB) *PostgreUserStore {
+func NewPostgresUserStore(db *sql.DB) *PostgresUserStore {
 	return &PostgresUserStore{
 		db: sqlx.NewDb(db, "pgx"),
 	}
