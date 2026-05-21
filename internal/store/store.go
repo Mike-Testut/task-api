@@ -8,11 +8,11 @@ import (
 )
 
 type Store interface {
-	CreateTask(content string) (models.Task, error)
-	GetTask(id int) (models.Task, error)
-	ListTasks(limit, offset int) ([]models.Task, error)
-	UpdateTask(id int, content string, completed bool) (models.Task, error)
-	DeleteTask(id int) error
+	CreateTask(userID int, ontent string) (models.Task, error)
+	GetTask(userID int, id int) (models.Task, error)
+	ListTasks(userID int, limit, offset int) ([]models.Task, error)
+	UpdateTask(userID int, id int, content string, completed bool) (models.Task, error)
+	DeleteTask(userID int, id int) error
 }
 
 type TaskStore struct {

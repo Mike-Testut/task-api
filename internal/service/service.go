@@ -21,7 +21,7 @@ func NewTaskService(s store.Store) *TaskService {
 	return &TaskService{store: s}
 }
 
-func (s *TaskService) CreateTask(content string) (models.Task, error) {
+func (s *TaskService) CreateTask(userID int, content string) (models.Task, error) {
 	if content == "" {
 		return models.Task{}, ErrContentRequired
 	}
@@ -29,20 +29,20 @@ func (s *TaskService) CreateTask(content string) (models.Task, error) {
 		return models.Task{}, ErrContentTooLong
 	}
 
-	return s.store.CreateTask(content)
+	return s.store.CreateTask(userID, content)
 
 }
 
-func (s *TaskService) GetTask(id int) (models.Task, error) {
-	task, err := s.store.GetTask(id)
+func (s *TaskService) GetTask(userID, taskID int) (models.Task, error) {
+	task, err := s.store.GetTask(userID, taskID)
 	if err != nil {
 		return models.Task{}, ErrTaskNotFound
 	}
 	return task, nil
 }
 
-func (s *TaskService) ListTasks(limit, offset int) ([]models.Task, error) {
-	task, err := s.store.ListTasks(limit, offset)
+func (s *TaskService) ListTasks(userID, limit, offset int) ([]models.Task, error) {
+	task, err := s.store.ListTasks(userID, limit, offset)
 	if err != nil {
 		return []models.Task{}, ErrTaskNotFound
 	}
@@ -60,16 +60,16 @@ func (s *TaskService) ListTasks(limit, offset int) ([]models.Task, error) {
 
 }
 
-func (s *TaskService) UpdateTask(id int, content string, completed bool) (models.Task, error) {
-	task, err := s.store.UpdateTask(id, content, completed)
+func (s *TaskService) UpdateTask(content string, completed bool, taskID, userID int) (models.Task, error) {
+	task, err := s.store.UpdateTask(userID, taskID, content, completed)
 	if err != nil {
 		return models.Task{}, ErrTaskNotFound
 	}
 	return task, nil
 }
 
-func (s *TaskService) DeleteTask(id int) error {
-	err := s.store.DeleteTask(id)
+func (s *TaskService) DeleteTask(userID, taskID int) error {
+	err := s.store.DeleteTask(userID, taskID)
 	if err != nil {
 		return ErrTaskNotFound
 	}

@@ -19,17 +19,23 @@ func NewTaskHandlers(s *service.TaskService) *TaskHandlers {
 }
 
 func (h *TaskHandlers) CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserIDFromContext(r)
+	if err != nil {
+		httpjson.ErrorJSON(w, http.StatusUnauthorized, "Not authenticated")
+		return
+	}
+
 	var input struct {
 		Content string `json:"content"`
 	}
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	err = json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
 		httpjson.ErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	task, err := h.service.CreateTask(input.Content)
+	task, err := h.service.CreateTask(userID, input.Content)
 	if err != nil {
 		if errors.Is(err, service.ErrContentRequired) || errors.Is(err, service.ErrContentTooLong) {
 			httpjson.ErrorJSON(w, http.StatusBadRequest, err.Error())
@@ -43,14 +49,21 @@ func (h *TaskHandlers) CreateTaskHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *TaskHandlers) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserIDFromContext(r)
+	if err != nil {
+		httpjson.ErrorJSON(w, http.StatusUnauthorized, "Not authenticated")
+		return
+	}
+
 	idStr := r.PathValue("id")
-	id, err := strconv.Atoi(idStr)
+	taskID, err := strconv.Atoi(idStr)
+
 	if err != nil {
 		http.Error(w, "Invalid task ID", http.StatusBadRequest)
 		return
 	}
 
-	task, err := h.service.GetTask((id))
+	task, err := h.service.GetTask(userID, taskID)
 	if err != nil {
 		if errors.Is(err, service.ErrTaskNotFound) {
 			httpjson.ErrorJSON(w, http.StatusNotFound, err.Error())
@@ -64,6 +77,12 @@ func (h *TaskHandlers) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TaskHandlers) ListTasksHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserIDFromContext(r)
+	if err != nil {
+		httpjson.ErrorJSON(w, http.StatusUnauthorized, "Not authenticated")
+		return
+	}
+
 	query := r.URL.Query()
 
 	limitStr := query.Get("limit")
@@ -77,7 +96,7 @@ func (h *TaskHandlers) ListTasksHandler(w http.ResponseWriter, r *http.Request) 
 	if err != nil || offset < 0 {
 		offset = 0
 	}
-	tasks, err := h.service.ListTasks(limit, offset)
+	tasks, err := h.service.ListTasks(userID, limit, offset)
 	if err != nil {
 		httpjson.ErrorJSON(w, http.StatusInternalServerError, "Interna server error")
 		return
@@ -87,8 +106,14 @@ func (h *TaskHandlers) ListTasksHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *TaskHandlers) UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserIDFromContext(r)
+	if err != nil {
+		httpjson.ErrorJSON(w, http.StatusUnauthorized, "Not authenticated")
+		return
+	}
+
 	idStr := r.PathValue("id")
-	id, err := strconv.Atoi(idStr)
+	taskID, err := strconv.Atoi(idStr)
 
 	if err != nil {
 		httpjson.ErrorJSON(w, http.StatusBadRequest, "invalid task ID")
@@ -104,7 +129,7 @@ func (h *TaskHandlers) UpdateTaskHandler(w http.ResponseWriter, r *http.Request)
 		httpjson.ErrorJSON(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
-	task, err := h.service.UpdateTask(id, input.Content, input.Completed)
+	task, err := h.service.UpdateTask(input.Content, input.Completed, taskID, userID)
 	if err != nil {
 		httpjson.ErrorJSON(w, http.StatusNotFound, err.Error())
 		return
@@ -114,14 +139,20 @@ func (h *TaskHandlers) UpdateTaskHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *TaskHandlers) DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserIDFromContext(r)
+	if err != nil {
+		httpjson.ErrorJSON(w, http.StatusUnauthorized, "Not authenticated")
+		return
+	}
+
 	idStr := r.PathValue("id")
-	id, err := strconv.Atoi(idStr)
+	taskID, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "Invalid task ID", http.StatusBadRequest)
 		return
 	}
 
-	err = h.service.DeleteTask(id)
+	err = h.service.DeleteTask(userID, taskID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return

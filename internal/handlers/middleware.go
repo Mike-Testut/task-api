@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -61,4 +62,17 @@ func (am *AuthMiddleware) Protect(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func getUserIDFromContext(r *http.Request)(int, error){
+	userIDVal := r.Context().Value(userContextKey)
+
+	if userIDVal == nil {
+		return 0, fmt.Errorf("user not found in context")
+	}
+	userID, ok:=userIDVal.(int)
+	if !ok {
+		return 0, fmt.Errorf("user id in context is not an integer")
+	}
+	return userID, nil
 }
